@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -7,6 +7,8 @@ from sqlalchemy import select
 
 from shared.database import Base, SessionLocal, engine
 from models import Order
+
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(
     title="RetailOps Order Service",
@@ -91,3 +93,9 @@ def get_order(order_id: str):
             raise HTTPException(status_code=404, detail="Order not found")
 
         return serialize_order(order)
+
+Instrumentator().instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+)

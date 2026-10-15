@@ -1,4 +1,4 @@
-﻿services:
+services:
   retailops-api:
     build:
       context: .
@@ -95,9 +95,51 @@
     networks:
       - retailops-network
 
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: retailops-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "2104:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    depends_on:
+      retailops-api:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+    networks:
+      - retailops-network
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    container_name: retailops-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "2105:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    networks:
+      - retailops-network
 networks:
   retailops-network:
     driver: bridge
 
 volumes:
+  prometheus-data:
+  grafana-data:
   postgres-data:

@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -6,6 +6,8 @@ from sqlalchemy import select
 
 from shared.database import Base, SessionLocal, engine
 from models import InventoryItem
+
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(
     title="RetailOps Inventory Service",
@@ -95,3 +97,9 @@ def update_stock(sku: str, request: StockUpdate):
         db.refresh(item)
 
         return serialize_item(item)
+
+Instrumentator().instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+)

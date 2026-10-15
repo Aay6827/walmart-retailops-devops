@@ -1,5 +1,7 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from fastapi import FastAPI
+
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(
     title="Walmart RetailOps API",
@@ -22,3 +24,9 @@ def health():
         "service": "retailops-api",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+Instrumentator().instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False,
+)
