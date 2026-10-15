@@ -1,4 +1,4 @@
-﻿name: RetailOps CI
+name: RetailOps CI
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   test:
-    name: Run automated tests
+    name: Run automated tests and validate deployment config
     runs-on: ubuntu-latest
 
     steps:
@@ -31,3 +31,8 @@ jobs:
 
       - name: Run automated tests
         run: python -m pytest tests/test_services.py -v
+
+      - name: Validate Docker Compose configuration
+        env:
+          GRAFANA_ADMIN_PASSWORD: ci-validation-only-placeholder
+        run: docker compose config --quiet
