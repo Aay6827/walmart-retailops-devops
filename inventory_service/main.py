@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
@@ -9,10 +10,24 @@ from models import InventoryItem
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+
+    with SessionLocal() as db:
+        for seed in SEED_ITEMS:
+            if db.get(InventoryItem, seed["sku"]) is None:
+                db.add(InventoryItem(**seed))
+        db.commit()
+
+    yield
+
+
 app = FastAPI(
     title="RetailOps Inventory Service",
     description="Persistent retail inventory management portfolio service",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 SEED_ITEMS = [
@@ -32,18 +47,6 @@ def serialize_item(item: InventoryItem) -> dict:
         "name": item.name,
         "quantity": item.quantity,
     }
-
-
-@app.on_event("startup")
-def create_tables_and_seed_inventory():
-    Base.metadata.create_all(bind=engine)
-
-    with SessionLocal() as db:
-        for seed in SEED_ITEMS:
-            if db.get(InventoryItem, seed["sku"]) is None:
-                db.add(InventoryItem(**seed))
-
-        db.commit()
 
 
 @app.get("/")

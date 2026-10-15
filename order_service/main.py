@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -10,10 +11,17 @@ from models import Order
 
 from prometheus_fastapi_instrumentator import Instrumentator
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
 app = FastAPI(
     title="RetailOps Order Service",
     description="Persistent retail order management portfolio service",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -34,11 +42,6 @@ def serialize_order(order: Order) -> dict:
         "status": order.status,
         "created_at": created_at.isoformat(),
     }
-
-
-@app.on_event("startup")
-def create_tables():
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
