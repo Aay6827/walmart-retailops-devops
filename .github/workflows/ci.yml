@@ -18,7 +18,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,7 +30,6 @@ jobs:
 
       - name: Run automated tests
         run: python -m pytest tests/test_services.py -v
-
       - name: Validate Docker Compose configuration
         env:
           GRAFANA_ADMIN_PASSWORD: ci-validation-only-placeholder
@@ -49,7 +47,6 @@ jobs:
 
       - name: Prepare report directory
         run: mkdir -p trivy-reports
-
       - name: Build RetailOps API image
         run: docker build -t retailops-api:ci -f Dockerfile .
 
@@ -58,7 +55,6 @@ jobs:
 
       - name: Build inventory service image
         run: docker build -t inventory-service:ci -f inventory_service/Dockerfile .
-
       - name: Scan RetailOps API image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -69,7 +65,6 @@ jobs:
           ignore-unfixed: "false"
           vuln-type: os,library
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
-
       - name: Scan order service image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -81,7 +76,6 @@ jobs:
           vuln-type: os,library
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           skip-setup-trivy: true
-
       - name: Scan inventory service image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -93,50 +87,9 @@ jobs:
           vuln-type: os,library
           severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           skip-setup-trivy: true
-
-      - name: Summarize vulnerability severity
+      - name: Summarize vulnerability severity and remediation status
         if: always()
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          reports = [
-              ("RetailOps API", Path("trivy-reports/retailops-api.json")),
-              ("Order Service", Path("trivy-reports/order-service.json")),
-              ("Inventory Service", Path("trivy-reports/inventory-service.json")),
-          ]
-          severities = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
-          lines = [
-              "## Container vulnerability summary",
-              "",
-              "| Image | " + " | ".join(severities) + " |",
-              "|---|" + "|".join(["---:"] * len(severities)) + "|",
-          ]
-
-          for name, path in reports:
-              counts = {severity: 0 for severity in severities}
-              if path.exists():
-                  try:
-                      data = json.loads(path.read_text(encoding="utf-8"))
-                      for result in data.get("Results") or []:
-                          for vuln in result.get("Vulnerabilities") or []:
-                              severity = vuln.get("Severity", "UNKNOWN").upper()
-                              if severity in counts:
-                                  counts[severity] += 1
-                      row = [name] + [str(counts[s]) for s in severities]
-                      lines.append("| " + " | ".join(row) + " |")
-                  except (json.JSONDecodeError, OSError) as exc:
-                      lines.append(f"| {name} | Report could not be parsed: {exc} |")
-              else:
-                  lines.append(f"| {name} | Report not generated |")
-
-          summary = "\n".join(lines) + "\n"
-          print(summary)
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-              f.write(summary)
-          PY
+        run: python scripts/summarize_trivy.py --report-dir trivy-reports
 
       - name: Upload Trivy JSON reports
         if: always()
