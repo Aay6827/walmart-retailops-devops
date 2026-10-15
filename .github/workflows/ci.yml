@@ -30,10 +30,12 @@ jobs:
 
       - name: Run automated tests
         run: python -m pytest tests/test_services.py -v
-      - name: Validate Docker Compose configuration
+      - name: Validate Docker Compose and runtime security policy
         env:
           GRAFANA_ADMIN_PASSWORD: ci-validation-only-placeholder
-        run: docker compose config --quiet
+        run: |
+          docker compose config --quiet
+          python scripts/check_compose_security.py
 
   image-security:
     name: Build and report image vulnerabilities
