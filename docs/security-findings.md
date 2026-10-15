@@ -57,3 +57,60 @@ Use the current upstream/distribution records during each triage; do not treat t
 - [Debian Security Tracker — acl](https://security-tracker.debian.org/tracker/source-package/acl)
 - [Debian Security Tracker — util-linux](https://security-tracker.debian.org/tracker/source-package/util-linux)
 - [Trivy vulnerability scanner documentation](https://trivy.dev/docs/latest/scanner/vulnerability/)
+
+## Residual Debian base-image findings (reviewed 2026-10-15)
+
+### Scan summary
+
+Source artifact: trivy-container-vulnerability-reports (6).zip
+
+| Severity | Findings per application image |
+|---|---:|
+| Critical | 0 |
+| High | 44 |
+| Medium | 58 |
+| Low | 61 |
+| Unknown | 1 |
+| Total | 164 |
+
+These counts represent package-vulnerability findings, not distinct CVEs.
+The three application images had the same severity counts.
+
+Trivy listed no non-empty FixedVersion values for these findings. This does
+not prove that fixes do not exist. Debian security advisories and applicable
+stable-release package updates must be checked independently.
+
+### Distinct HIGH CVEs identified
+
+| CVE | Affected package(s) in the scan | Follow-up action |
+|---|---|---|
+| CVE-2025-69720 | libncursesw6, libtinfo6, ncurses-base, ncurses-bin | Verify Debian status and whether affected functionality is used. |
+| CVE-2026-16742 | libsystemd0, libudev1 | Verify Debian status and applicability to the container runtime. |
+| CVE-2026-54369 | libacl1 | Verify Debian status and exposure to affected ACL operations. |
+| CVE-2026-76642 | bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login, mount, util-linux | Review applicable advisory, package versions, and mount-related privileges. |
+| CVE-2026-78408 | bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login, mount, util-linux | Review applicable advisory and whether affected functionality is available or used. |
+| CVE-2026-78409 | bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login, mount, util-linux | Review applicable advisory and mount configuration exposure. |
+| CVE-2026-78410 | bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login, mount, util-linux | Review applicable advisory and privileged mount configuration exposure. |
+| CVE-2026-9538 | perl-base | Verify Debian status and whether the affected functionality is used. |
+
+### Remediation and risk-management plan
+
+1. Retain the non-root application user.
+2. Continue applying available Debian package updates and rebuilding images.
+3. Re-scan rebuilt images and compare results with previous scan artifacts.
+4. Verify each finding against the applicable Debian security tracker entry.
+5. Do not introduce unstable repositories or suppress findings simply to obtain a green scan.
+6. Reassess residual findings when applicable stable-release fixes become available.
+7. Record subsequent scan dates, findings, and remediation decisions.
+8. Treat exposure and exploitability as not yet fully validated until runtime configuration and service usage have been reviewed.
+
+### Debian security tracker references
+
+- https://security-tracker.debian.org/tracker/CVE-2025-69720
+- https://security-tracker.debian.org/tracker/CVE-2026-16742
+- https://security-tracker.debian.org/tracker/CVE-2026-54369
+- https://security-tracker.debian.org/tracker/CVE-2026-76642
+- https://security-tracker.debian.org/tracker/CVE-2026-78408
+- https://security-tracker.debian.org/tracker/CVE-2026-78409
+- https://security-tracker.debian.org/tracker/CVE-2026-78410
+- https://security-tracker.debian.org/tracker/CVE-2026-9538
