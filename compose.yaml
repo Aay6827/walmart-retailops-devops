@@ -1,5 +1,13 @@
 services:
   retailops-api:
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    tmpfs:
+      - "/tmp:rw,noexec,nosuid,size=16m,mode=1777"
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,6 +29,14 @@ services:
       - retailops-network
 
   order-service:
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    tmpfs:
+      - "/tmp:rw,noexec,nosuid,size=16m,mode=1777"
     build:
       context: .
       dockerfile: order_service/Dockerfile
@@ -47,6 +63,14 @@ services:
       - retailops-network
 
   inventory-service:
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    tmpfs:
+      - "/tmp:rw,noexec,nosuid,size=16m,mode=1777"
     build:
       context: .
       dockerfile: inventory_service/Dockerfile
