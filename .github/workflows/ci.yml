@@ -36,3 +36,54 @@ jobs:
         env:
           GRAFANA_ADMIN_PASSWORD: ci-validation-only-placeholder
         run: docker compose config --quiet
+
+  image-security:
+    name: Build and scan application images
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build RetailOps API image
+        run: docker build -t retailops-api:ci -f Dockerfile .
+
+      - name: Build order service image
+        run: docker build -t order-service:ci -f order_service/Dockerfile .
+
+      - name: Build inventory service image
+        run: docker build -t inventory-service:ci -f inventory_service/Dockerfile .
+
+      - name: Scan RetailOps API image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: retailops-api:ci
+          format: table
+          exit-code: "0"
+          ignore-unfixed: "false"
+          vuln-type: os,library
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+
+      - name: Scan order service image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: order-service:ci
+          format: table
+          exit-code: "0"
+          ignore-unfixed: "false"
+          vuln-type: os,library
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          skip-setup-trivy: true
+
+      - name: Scan inventory service image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: inventory-service:ci
+          format: table
+          exit-code: "0"
+          ignore-unfixed: "false"
+          vuln-type: os,library
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          skip-setup-trivy: true
