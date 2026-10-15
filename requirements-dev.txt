@@ -1,0 +1,3 @@
+﻿-r order_service/requirements.txt
+pytest
+httpx
